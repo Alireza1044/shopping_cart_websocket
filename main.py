@@ -24,13 +24,14 @@ class Product(db.Model):
 
     @property
     def serialize(self):
-       """Return object data in easily serializable format"""
-       return {
-           'id'         : self.id,
-           'name'       : self.name,
-           'price'      : self.price,
-           'quantity'   : self.quantity
-       }
+        """Return object data in easily serializable format"""
+        return {
+            'id': self.id,
+            'name': self.name,
+            'price': self.price,
+            'quantity': self.quantity
+        }
+
 
 db.create_all()
 
@@ -43,14 +44,26 @@ db.session.add(p2)
 db.session.add(p3)
 db.session.commit()
 
+
 @app.route('/')
 def show_all():
-    return render_template('show_all.html', products=products.query.all())
+    return render_template('show_all.html', products=Product.query.all())
 
 
 @socketio.on('connect')
 def test_connect():
     print('someone connected to websocket')
+    a = [x.serialize for x in Product.query.all()]
+    print(a)
+    emit("update_prod", a)
+
+
+@socketio.on('added-to-cart')
+def add_to_cart(data):
+    print(data)
+    a = [x.serialize for x in Product.query.filter_by(id=data['id'])]
+    print("A=   ", a)
+    emit('update_cart', a)
 
 
 if __name__ == '__main__':
