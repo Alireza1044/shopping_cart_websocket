@@ -87,7 +87,7 @@ def shopping_cart(response):
 def test_connect():
     print('someone connected to websocket')
     a = [x.serialize for x in Product.query.all()]
-    print(a)
+    # print(a)
     emit("update_prod", a)
 
 
@@ -154,20 +154,22 @@ def add_to_cart(data):
     session.modified = True
 
     a = [session['cart']]
-    print("A=   ", a)
+    # print("A=   ", a)
     emit('update_cart', a)
 
 
 @socketio.on('removed-from-cart')
 def removed_from_cart(data):
+    print('***************************\n\n')
     print(data)
+    print('\n\n***************************\n\n')
     id = data['id']
 
     session['cart'].pop(id, None)
     session.modified = True
 
     a = [session['cart']]
-    print("A=   ", a)
+    # print("A=   ", a)
     emit('update_cart', a)
 
 
