@@ -112,7 +112,6 @@ def removed_from_cart(data):
     print(data)
     id = data['id']
 
-    product = Product.query.filter_by(id=id)
     session['cart'].pop(id, None)
     session.modified = True
 
