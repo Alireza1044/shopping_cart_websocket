@@ -103,8 +103,13 @@ def modify(data):
     product.price = n_price
     product.quantity = n_quantity
 
-    product.update()
+    # product.update()
+    flag_modified(product, "name")
+    flag_modified(product, "price")
+    flag_modified(product, "quantity")
 
+    db.session.merge(product)
+    db.session.flush()
     db.session.commit()
 
     a = [x.serialize for x in Product.query.all()]
