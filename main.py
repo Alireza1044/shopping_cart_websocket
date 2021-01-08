@@ -130,9 +130,9 @@ def remove(data):
     print('data modified')
     id = data['id']
 
-    product = Product.query.filter_by(id=id)
+    User.query.filter_by(id=123).delete()
 
-    db.session.delete(product)
+    # db.session.delete(product)
     db.session.commit()
 
     a = [x.serialize for x in Product.query.all()]
