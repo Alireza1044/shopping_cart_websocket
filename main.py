@@ -101,16 +101,27 @@ def test_connect():
 
 
 @socketio.on('modified')
-def test_connect():
-    print('someone connected to websocket')
+def modify():
+    print('data modified')
+    #TODO modify data in DB
     a = [x.serialize for x in Product.query.all()]
     print(a)
-    # emit("update_prod", a)
+    emit("update_prod", a)
 
 
 @socketio.on('added-to-cart')
 def add_to_cart(data):
     print(data)
+    # TODO add item to cart
+    a = [x.serialize for x in Product.query.filter_by(id=data['id'])]
+    print("A=   ", a)
+    emit('update_cart', a)
+
+
+@socketio.on('removed-from-cart')
+def removed_from_cart(data):
+    print(data)
+    # TODO remove item from cart
     a = [x.serialize for x in Product.query.filter_by(id=data['id'])]
     print("A=   ", a)
     emit('update_cart', a)
