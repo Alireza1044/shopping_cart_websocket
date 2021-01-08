@@ -3,14 +3,21 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from flask_socketio import SocketIO, emit, send
 from sqlalchemy.orm.attributes import flag_modified
+# from flask.ext.session import Session
+from flask_session import Session
+from cookie import *
 
 app = Flask(__name__, template_folder="/template")
+
+app.config['SESSION_TYPE'] = 'filesystem'
 app.config['SESSION_COOKIE_HTTPONLY'] = False
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///students.sqlite3'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = 'true'
 app.config['SECRET_KEY'] = 'guessmeifyoucan'
 app.config['JSONIFY_PRETTYPRINT_REGULAR'] = False
-socketio = SocketIO(app, cors_allowed_origins="*")
+
+Session(app)
+socketio = SocketIO(app, cors_allowed_origins="*", manage_session=False)
 db = SQLAlchemy(app)
 
 
@@ -61,18 +68,35 @@ db.session.commit()
 
 @app.route('/shop/', methods=['GET'])
 def load():
-    return list_retrieve()
+
+    if 'cart' not in session:
+        session['cart'] = {'foo' : 'areee'}
+        session.modified = True
+
+    print('***************************\n\n')
+    print(session)
+    print('\n\n***************************\n\n')
+
+
+    objs = [x.serialize for x in Product.query.all()]
+    json = jsonify(objs)
+    return json
 
 
 @app.after_request
 def shopping_cart(response):
     origin = request.headers.get('Origin')
 
-    # if 'cart' not in session:
-    #     session['cart'] = {}
-    #     session.modified = True
-    #
-    # session.modified = True
+    cookie_data = encodeFlaskCookie(app.secret_key, dict(session))
+    print('***************************\n\n')
+    print(cookie_data)
+    print('\n\n***************************\n\n')
+    coo_dec = decodeFlaskCookie(app.secret_key, cookie_data)
+    print(coo_dec)
+    print('\n\n***************************\n\n')
+    response.set_cookie('cart', cookie_data)
+
+
 
     response.headers.add('Access-Control-Allow-Headers', '*')
     response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
@@ -83,12 +107,12 @@ def shopping_cart(response):
     return response
 
 
-@socketio.on('connect')
-def test_connect():
-    print('someone connected to websocket')
-    a = [x.serialize for x in Product.query.all()]
-    # print(a)
-    emit("update_prod", a)
+# @socketio.on('connect')
+# def test_connect():
+#     print('someone connected to websocket')
+#     a = [x.serialize for x in Product.query.all()]
+#     # print(a)
+#     emit("update_prod", a)
 
 
 @socketio.on('modified-product')
@@ -146,15 +170,23 @@ def add_to_cart(data):
 
     product = Product.query.filter_by(id=id).first()
 
-    if 'cart' not in session:
-        session['cart'] = {}
-        session.modified = True
+    # if 'cart' not in session:
+    #     session['cart'] = {}
+    #     session.modified = True
+
+
 
     session['cart'][id] = product.serialize
+
+    print('***************************\n\n')
+    print(session)
+    print('\n\n***************************\n\n')
+    # session['cart'] = 'kiiiiir'
+
+
     session.modified = True
 
     a = [session['cart']]
-    # print("A=   ", a)
     emit('update_cart', a)
 
 
