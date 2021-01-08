@@ -151,7 +151,8 @@ def add_to_cart(data):
     print(data)
     id = data['id']
 
-    product = Product.query.filter_by(id=id)
+    # product = Product.query.filter_by(id=id)
+    product = Product.query().filter(Product.id==id)
     session['cart'][id] = product.serialize
     session.modified = True
 
