@@ -104,9 +104,9 @@ def modify(data):
     product.quantity = n_quantity
 
     # product.update()
-    flag_modified(product, "name")
-    flag_modified(product, "price")
-    flag_modified(product, "quantity")
+    # flag_modified(product, "name")
+    # flag_modified(product, "price")
+    # flag_modified(product, "quantity")
 
     db.session.merge(product)
     db.session.flush()
