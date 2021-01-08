@@ -160,9 +160,9 @@ def add_to_cart(data):
 
 @socketio.on('removed-from-cart')
 def removed_from_cart(data):
-    print('***************************\n\n')
+    # print('***************************\n\n')
     print(data)
-    print('\n\n***************************\n\n')
+    # print('\n\n***************************\n\n')
     id = data['id']
 
     session['cart'].pop(id, None)
