@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, flash, redirect, url_for
+from flask import Flask, render_template, request, flash, redirect, url_for, jsonify, session
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from flask_socketio import SocketIO, emit, send
@@ -17,11 +17,6 @@ class Product(db.Model):
     price = db.Column(db.Float)
     quantity = db.Column(db.Integer)
 
-    # def __init__(self, name, price, quantity):
-    #     self.name = name
-    #     self.price = price
-    #     self.quantity = quantity
-
     @property
     def serialize(self):
         """Return object data in easily serializable format"""
@@ -31,6 +26,11 @@ class Product(db.Model):
             'price': self.price,
             'quantity': self.quantity
         }
+
+def list_retrieve():
+    objs = [x.serialize for x in Product.query.all()]
+    json = jsonify(objs)
+    return json
 
 
 db.create_all()
@@ -45,9 +45,27 @@ db.session.add(p3)
 db.session.commit()
 
 
-@app.route('/')
-def show_all():
-    return render_template('show_all.html', products=Product.query.all())
+# @app.route('/')
+# def show_all():
+#     return render_template('show_all.html', products=Product.query.all())
+
+@app.route('/shop/', methods = ['GET'])
+def load():
+    return list_retrieve()
+
+
+@app.route('/sess/', methods = ['GET'])
+def updating_session():
+    res = str(session.items())
+
+    cart_item = {'pineapples': '10', 'apples': '20', 'mangoes': '30'}
+    if 'cart_item' in session:
+        session['cart_item']['pineapples'] = '100'
+        session.modified = True
+    else:
+        session['cart_item'] = cart_item
+
+    return res
 
 
 @socketio.on('connect')
