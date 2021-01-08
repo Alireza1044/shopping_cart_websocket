@@ -80,14 +80,19 @@ class App extends Component {
         this.socket.emit("added-to-cart", {id : idprod}, function(idp){
             console.log(idprod);
         });
-      }
-
+    }
+    
     handleClickRemove(e,idprod) {
         e.preventDefault();
         this.socket.emit("removed-from-cart", {id : idprod}, function(idps){
             console.log(idprod);
         });
-      }
+    }
+    
+    handleClickCheckout(e) {
+        e.preventDefault();
+        this.socket.emit("checkout");
+    }
     
     renderTableDataProducts(where) {
         return where.map((student, index) => {
@@ -105,19 +110,36 @@ class App extends Component {
     }
     
     renderTableDataCart(where) {
-        return where.map((student, index) => {
-            const { id, name, price, quantity } = student //destructuring
-            var ref_tag = `${id}_remove`;
-            return (
-                    <tr key={id}>
-                    <td>{id}</td>
-                    <td>{name}</td>
-                    <td>{price}</td>
-                    <td>{quantity}</td>
-                    <td><button key={id} width='50px' height='50px' onClick={(e) => this.handleClickRemove(e,id)}>Remove</button></td>
-                    </tr>
-                    )
-        })
+        if (where){
+            if(where[0]){
+                let header = Object.keys(where[0]);
+                var f = where[0];
+                return header.map((key, index) => {
+                    const { id, name, price, quantity } = f[key]; //destructuring
+                    var ref_tag = `${id}_remove`;
+                    return (
+                            <tr key={id}>
+                            <td>{id}</td>
+                            <td>{name}</td>
+                            <td>{price}</td>
+                            <td>{quantity}</td>
+                            <td><button key={id} width='50px' height='50px' onClick={(e) => this.handleClickRemove(e,id)}>Remove</button></td>
+                            </tr>
+                            )
+                })
+            }
+        }
+    }
+    
+    renderTableHeaderCart(where) {
+        if(where[0]){
+            let header = Object.keys(where[0]);
+            var k = header[0];
+            var f = where[0];
+                return Object.keys(f[k]).map((key, index) => {
+                    return <th key={index}>{key.toUpperCase()}</th>
+                })
+        }
     }
     
     renderTableHeader(where) {
@@ -143,10 +165,11 @@ class App extends Component {
                 <h1 id='title'>Shopping Cart</h1>
                 <table id='students'>
                 <tbody>
-                <tr>{this.renderTableHeader(this.state.cart)}</tr>
+                <tr>{this.renderTableHeaderCart(this.state.cart)}</tr>
                 {this.renderTableDataCart(this.state.cart)}
                 </tbody>
                 </table>
+                <button key="checkout" width='50px' height='50px' onClick={(e) => this.handleClickCheckout(e)}>Checkout</button>
                 </div>
                 )
     }

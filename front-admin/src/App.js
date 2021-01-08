@@ -107,6 +107,17 @@ class App extends Component {
                 <tbody>
                 <tr>{this.renderTableHeader(this.state.products)}</tr>
                 {this.renderTableDataProducts(this.state.products)}
+                
+                <tr>
+                <td>-1</td>
+                <td><input type="text" name="new_name" defaultValue="name"></input></td>
+                <td><input type="text" name="new_price" defaultValue="price"></input></td>
+                <td><input type="text" name="new_quant" defaultValue="quantity"></input></td>
+                <td><button width='50px' height='50px' onClick={(e) => this.handleClick(e,
+                                                                                                 document.getElementsByName("new_name")[0].value,
+                                                                                                 document.getElementsByName("new_price")[0].value,
+                                                                                                 document.getElementsByName("new_quant")[0].value)}>Add</button></td>
+                </tr>
                 </tbody>
                 </table>
                 </div>
