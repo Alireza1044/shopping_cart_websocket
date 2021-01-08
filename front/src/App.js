@@ -19,6 +19,7 @@ class App extends Component {
         cart: [],
         endpoint: "http://127.0.0.1:5000"
         }
+        this.socket = null;
         this.handleClick = this.handleClick.bind(this);
         this.handleClickRemove = this.handleClickRemove.bind(this);
         fetch('http://127.0.0.1:5000/shop/',{method: 'GET',
@@ -30,8 +31,9 @@ class App extends Component {
             console.log(this.state.products);
             console.log('data');
             console.log(this.data);
+            this.socket = io(this.state.endpoint);
         });
-        this.socket = io(this.state.endpoint)
+        
     }
     
     
@@ -66,6 +68,7 @@ class App extends Component {
         }
         
         
+        if(this.socket){
         this.socket.on("update_prod",(data) => {
             this.setState({products: data})
             console.log(this.state.products);
@@ -75,6 +78,7 @@ class App extends Component {
             this.setState({cart: data})
             console.log(this.state.products);
         });
+        }
     }
     
     handleClick(e,idprod) {
