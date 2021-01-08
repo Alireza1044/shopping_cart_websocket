@@ -136,9 +136,11 @@ class App extends Component {
             let header = Object.keys(where[0]);
             var k = header[0];
             var f = where[0];
+            if(k){
                 return Object.keys(f[k]).map((key, index) => {
                     return <th key={index}>{key.toUpperCase()}</th>
                 })
+        }
         }
     }
     

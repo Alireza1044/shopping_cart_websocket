@@ -22,6 +22,7 @@ class App extends Component {
         }
         this.handleClick = this.handleClick.bind(this);
         this.handleClickRemove = this.handleClickRemove.bind(this);
+        this.handleClickAddNewProd = this.handleClickAddNewProd.bind(this);
         this.socket = io(this.state.endpoint)
     }
     
@@ -65,6 +66,15 @@ class App extends Component {
         e.preventDefault();
         this.socket.emit("removed-product", {id : idprod}, function(idps){
             console.log(idprod);
+        });
+      }
+    
+    handleClickAddNewProd(e, nameprod, priceprod, quantprod) {
+        e.preventDefault();
+        this.socket.emit("added-product", {name: nameprod, price: priceprod, quantity: quantprod}, function(idp){
+            console.log(nameprod);
+            console.log(priceprod);
+            console.log(quantprod);
         });
       }
     
@@ -113,7 +123,7 @@ class App extends Component {
                 <td><input type="text" name="new_name" defaultValue="name"></input></td>
                 <td><input type="text" name="new_price" defaultValue="price"></input></td>
                 <td><input type="text" name="new_quant" defaultValue="quantity"></input></td>
-                <td><button width='50px' height='50px' onClick={(e) => this.handleClick(e,
+                <td><button width='50px' height='50px' onClick={(e) => this.handleClickAddNewProd(e,
                                                                                                  document.getElementsByName("new_name")[0].value,
                                                                                                  document.getElementsByName("new_price")[0].value,
                                                                                                  document.getElementsByName("new_quant")[0].value)}>Add</button></td>
