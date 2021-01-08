@@ -22,17 +22,6 @@ class App extends Component {
         this.socket = null;
         this.handleClick = this.handleClick.bind(this);
         this.handleClickRemove = this.handleClickRemove.bind(this);
-        fetch('http://127.0.0.1:5000/shop/',{method: 'GET',
-            credentials: "include"})
-        .then(response => response.json())
-        .then(data => { this.setState({ products: data })
-            console.log("FUCKING HTTP");
-            console.log('products');
-            console.log(this.state.products);
-            console.log('data');
-            console.log(this.data);
-            this.socket = io(this.state.endpoint);
-        });
         
     }
     
@@ -41,7 +30,18 @@ class App extends Component {
         console.log('I was triggered during componentDidMount')
         const { endpoint } = this.state;
         
-        
+        fetch('http://127.0.0.1:5000/shop/',{method: 'GET',
+            credentials: "include"})
+        .then(response => response.json())
+        .then(data => {
+            this.setState({products : data})
+            console.log("FUCKING HTTP");
+            console.log('products');
+            console.log(this.state.products);
+            console.log('data');
+            console.log(data);
+            this.socket = io(this.state.endpoint);
+        });
         
         console.log("coooooookie");
         let data = Cookies.get('cart');
