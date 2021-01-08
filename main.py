@@ -63,7 +63,7 @@ def load():
     return list_retrieve()
 
 @app.after_request
-def shopping_cart():
+def shopping_cart(response):
     origin = request.headers.get('Origin')
 
     cart_item = {'pineapples': '10', 'apples': '20', 'mangoes': '30'}
