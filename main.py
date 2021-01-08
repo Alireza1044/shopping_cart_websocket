@@ -103,6 +103,7 @@ def modify(data):
     product.price = n_price
     product.quantity = n_quantity
 
+    product.update()
 
     db.session.commit()
 
