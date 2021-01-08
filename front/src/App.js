@@ -40,7 +40,7 @@ class App extends Component {
         });
         
         console.log("coooooookie");
-        let data = Cookies.get('session');
+        let data = Cookies.get('cart');
         console.log(data);
         var compressed = false;
         if (data){
