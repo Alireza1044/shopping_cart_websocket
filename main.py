@@ -130,7 +130,7 @@ def remove(data):
     print('data modified')
     id = data['id']
 
-    User.query.filter_by(id=123).delete()
+    Product.query.filter_by(id=123).delete()
 
     # db.session.delete(product)
     db.session.commit()
