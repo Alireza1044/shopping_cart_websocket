@@ -61,10 +61,8 @@ def load():
 def shopping_cart(response):
     origin = request.headers.get('Origin')
 
-    example_cart = [{"id": 1, "name": "dildo", "price": 98.1, "quantity": 2},
-                    {"id": 2, "name": "butt plug", "price": 128.6, "quantity": 5}]
     if 'cart' not in session:
-        session['cart'] = example_cart
+        session['cart'] = {}
         session.modified = True
 
     session.modified = True
@@ -76,20 +74,6 @@ def shopping_cart(response):
     if origin:
         response.headers.add('Access-Control-Allow-Origin', origin)
     return response
-
-
-@app.route('/sess/', methods=['GET'])
-def updating_session():
-    res = str(session.items())
-
-    cart_item = {'pineapples': '10', 'apples': '20', 'mangoes': '30'}
-    if 'cart_item' in session:
-        session['cart_item']['pineapples'] = '100'
-        session.modified = True
-    else:
-        session['cart_item'] = cart_item
-
-    return res
 
 
 @socketio.on('connect')
@@ -112,8 +96,13 @@ def modify():
 @socketio.on('added-to-cart')
 def add_to_cart(data):
     print(data)
-    # TODO add item to cart
-    a = [x.serialize for x in Product.query.filter_by(id=data['id'])]
+    id = data['id']
+
+    product = Product.query.filter_by(id=id)
+    session['cart'][id] = product.serialize
+    session.modified = True
+
+    a = [session['cart']]
     print("A=   ", a)
     emit('update_cart', a)
 
@@ -121,8 +110,13 @@ def add_to_cart(data):
 @socketio.on('removed-from-cart')
 def removed_from_cart(data):
     print(data)
-    # TODO remove item from cart
-    a = [x.serialize for x in Product.query.filter_by(id=data['id'])]
+    id = data['id']
+
+    product = Product.query.filter_by(id=id)
+    session['cart'].pop(id, None)
+    session.modified = True
+
+    a = [session['cart']]
     print("A=   ", a)
     emit('update_cart', a)
 
