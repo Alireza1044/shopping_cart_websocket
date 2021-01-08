@@ -8,6 +8,7 @@ app = Flask(__name__, template_folder="/template")
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///students.sqlite3'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = 'true'
 app.config['SECRET_KEY'] = 'guessmeifyoucan'
+app.config['JSONIFY_PRETTYPRINT_REGULAR'] = False
 socketio = SocketIO(app, cors_allowed_origins="*")
 db = SQLAlchemy(app)
 

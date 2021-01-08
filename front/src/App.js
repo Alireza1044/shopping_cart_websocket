@@ -21,6 +21,10 @@ componentDidMount() {
   console.log('I was triggered during componentDidMount')
   const { endpoint } = this.state;
 
+  fetch('http://127.0.0.1:5000/shop/')
+        .then(response => response.json())
+        .then(data => this.setState({ products: data }));
+  console.log(this.state.products);
 
   this.socket.on("update_prod",(data) => {
     this.setState({products: data})
