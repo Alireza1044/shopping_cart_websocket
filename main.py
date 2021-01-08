@@ -4,7 +4,7 @@ from flask_cors import CORS
 from flask_socketio import SocketIO, emit, send
 
 app = Flask(__name__, template_folder="/template")
-# app.secret_key = "sagbeshashebeinzendegi123"
+app.config['SESSION_COOKIE_HTTPONLY'] = False
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///students.sqlite3'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = 'true'
 app.config['SECRET_KEY'] = 'guessmeifyoucan'
@@ -64,6 +64,8 @@ def shopping_cart(response):
         session['cart'] = example_cart
         session.modified = True
 
+    session.modified = True
+
     if origin:
         response.headers.add('Access-Control-Allow-Origin', origin)
     return response
@@ -84,6 +86,13 @@ def updating_session():
 
 
 @socketio.on('connect')
+def test_connect():
+    print('someone connected to websocket')
+    a = [x.serialize for x in Product.query.all()]
+    print(a)
+    emit("update_prod", a)
+
+@socketio.on('modified')
 def test_connect():
     print('someone connected to websocket')
     a = [x.serialize for x in Product.query.all()]
