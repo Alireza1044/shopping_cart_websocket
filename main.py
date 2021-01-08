@@ -35,6 +35,12 @@ def list_retrieve():
     json = jsonify(objs)
     return json
 
+def deserialize(json):
+    name = json['name']
+    price = json['price']
+    quantity = json['quantity']
+
+    return name, price, quantity
 
 db.create_all()
 
@@ -84,13 +90,52 @@ def test_connect():
     emit("update_prod", a)
 
 
-@socketio.on('modified')
-def modify():
+@socketio.on('modified-product')
+def modify(data):
     print('data modified')
-    #TODO modify data in DB
+    id = data['id']
+
+    product = Product.query.filter_by(id=id)
+    n_name, n_price, n_quantity = deserialize(data)
+
+    product.name = n_name
+    product.price = n_price
+    product.quantity = n_quantity
+
+    db.session.commit()
+
     a = [x.serialize for x in Product.query.all()]
     print(a)
-    emit("update_prod", a)
+    emit("update_prod", a, broadcast=True)
+
+
+@socketio.on('added-product')
+def add(data):
+    print('data modified')
+
+    n_name, n_price, n_quantity = deserialize(data)
+    n_product = Product(name=n_name, price=n_price, quantity=n_quantity)
+
+    db.session.add(n_product)
+    db.session.commit()
+
+    a = [x.serialize for x in Product.query.all()]
+    print(a)
+    emit("update_prod", a, broadcast=True)
+
+@socketio.on('removed-product')
+def remove(data):
+    print('data modified')
+    id = data['id']
+
+    product = Product.query.filter_by(id=id)
+
+    db.session.delete(product)
+    db.session.commit()
+
+    a = [x.serialize for x in Product.query.all()]
+    print(a)
+    emit("update_prod", a, broadcast=True)
 
 
 @socketio.on('added-to-cart')
