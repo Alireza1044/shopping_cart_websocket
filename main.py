@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, flash, redirect, url_for, jso
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from flask_socketio import SocketIO, emit, send
+from sqlalchemy.orm.attributes import flag_modified
 
 app = Flask(__name__, template_folder="/template")
 app.config['SESSION_COOKIE_HTTPONLY'] = False
@@ -36,9 +37,9 @@ def list_retrieve():
     return json
 
 def deserialize(json):
-    name = json['name']
-    price = json['price']
-    quantity = json['quantity']
+    name = str(json['name'])
+    price = float(json['price'])
+    quantity = int(json['quantity'])
 
     return name, price, quantity
 
@@ -101,6 +102,7 @@ def modify(data):
     product.name = n_name
     product.price = n_price
     product.quantity = n_quantity
+
 
     db.session.commit()
 
