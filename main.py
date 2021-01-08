@@ -1,9 +1,10 @@
-from flask import Flask, render_template, request, flash, redirect, url_for, jsonify, session
+from flask import Flask, render_template, request, flash, redirect, url_for, jsonify, session, make_response
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from flask_socketio import SocketIO, emit, send
 
 app = Flask(__name__, template_folder="/template")
+app.secret_key = "sagbeshashebeinzendegi123"
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///students.sqlite3'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = 'true'
 app.config['SECRET_KEY'] = 'guessmeifyoucan'
@@ -51,7 +52,30 @@ db.session.commit()
 
 @app.route('/shop/', methods = ['GET'])
 def load():
+    #
+    # cart_item = {'pineapples': '10', 'apples': '20', 'mangoes': '30'}
+    # if 'cart_item' in session:
+    #     session['cart_item']['pineapples'] = '100'
+    #     session.modified = True
+    # else:
+    #     session['cart_item'] = cart_item
+
     return list_retrieve()
+
+@app.after_request
+def shopping_cart():
+    origin = request.headers.get('Origin')
+
+    cart_item = {'pineapples': '10', 'apples': '20', 'mangoes': '30'}
+    if 'cart_item' in session:
+        session['cart_item']['pineapples'] = '100'
+        session.modified = True
+    else:
+        session['cart_item'] = cart_item
+
+    if origin:
+        response.headers.add('Access-Control-Allow-Origin', origin)
+    return response
 
 
 @app.route('/sess/', methods = ['GET'])
