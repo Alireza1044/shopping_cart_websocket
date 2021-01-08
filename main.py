@@ -68,11 +68,11 @@ def load():
 def shopping_cart(response):
     origin = request.headers.get('Origin')
 
-    if 'cart' not in session:
-        session['cart'] = {}
-        session.modified = True
-
-    session.modified = True
+    # if 'cart' not in session:
+    #     session['cart'] = {}
+    #     session.modified = True
+    #
+    # session.modified = True
 
     response.headers.add('Access-Control-Allow-Headers', '*')
     response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
@@ -96,20 +96,13 @@ def modify(data):
     print('data modified')
     id = data['id']
 
-    product = Product.query.filter_by(id=id)
+    product = Product.query.filter_by(id=id).first()
     n_name, n_price, n_quantity = deserialize(data)
 
     product.name = n_name
     product.price = n_price
     product.quantity = n_quantity
 
-    # product.update()
-    # flag_modified(product, "name")
-    # flag_modified(product, "price")
-    # flag_modified(product, "quantity")
-
-    db.session.merge(product)
-    db.session.flush()
     db.session.commit()
 
     a = [x.serialize for x in Product.query.all()]
@@ -148,11 +141,15 @@ def remove(data):
 
 @socketio.on('added-to-cart')
 def add_to_cart(data):
-    print(data)
+
     id = data['id']
 
-    # product = Product.query.filter_by(id=id)
-    product = Product.query().filter(Product.id==id)
+    product = Product.query.filter_by(id=id).first()
+
+    if 'cart' not in session:
+        session['cart'] = {}
+        session.modified = True
+
     session['cart'][id] = product.serialize
     session.modified = True
 
