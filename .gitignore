@@ -9,7 +9,7 @@
 .DS_Store
 .AppleDouble
 .LSOverride
-
+.students.sqlite3
 # Icon must end with two \r
 Icon
 
