@@ -1,9 +1,45 @@
-import logo from './logo.svg'
+import logo from './logo.svg';
 import react, { Component } from 'react';
 import './App.css';
-import ReactDOM from 'react-dom'
-import io from 'socket.io-client'
-import { Button } from 'semantic-ui-react'
+import ReactDOM from 'react-dom';
+import io from 'socket.io-client';
+import { Button } from 'semantic-ui-react';
+import Cookies from 'js-cookie';
+import zlib from 'react-zlib-js';
+import pako from 'pako';
+import urlsafe_b64 from 'urlsafe-base64';
+import { encode, decode, Base64 } from 'js-base64';
+
+function getCookie(ca,name) {
+    var nameEQ = name + "=";
+    for(var i=0;i < ca.length;i++) {
+        var c = ca[i];
+        while (c.charAt(0)==' ') c = c.substring(1,c.length);
+        if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length,c.length);
+    }
+    return null;
+}
+
+function readCookie(cname) {
+  var name = cname + "=";
+  var decodedCookie = decodeURIComponent(document.cookie);
+  var ca = decodedCookie.split(';');
+  for(var i = 0; i <ca.length; i++) {
+    var c = ca[i];
+    while (c.charAt(0) == ' ') {
+      c = c.substring(1);
+    }
+    if (c.indexOf(name) == 0) {
+      return c.substring(name.length, c.length);
+    }
+  }
+  return "";
+}
+
+function bake_cookie(name, value) {
+  var cookie = [name, '=', JSON.stringify(value), '; domain=.', window.location.host.toString(), '; path=/;'].join('');
+  document.cookie = cookie;
+}
 
 class App extends Component {
   constructor (props) {
@@ -17,14 +53,45 @@ class App extends Component {
     this.socket = io(this.state.endpoint)
   }
 
+
 componentDidMount() {
   console.log('I was triggered during componentDidMount')
   const { endpoint } = this.state;
 
-  fetch('http://127.0.0.1:5000/shop/')
+  fetch('http://127.0.0.1:5000/shop/',{method: 'GET',
+  credentials: "include"})
         .then(response => response.json())
-        .then(data => this.setState({ products: data }));
+        .then(data => { this.setState({ products: data })
+  console.log('products');
   console.log(this.state.products);
+  console.log('data');
+  console.log(this.data);
+});
+  
+  console.log("coooooookie");
+  let data = Cookies.get('session');
+  console.log(data);
+  var compressed = false;
+  if (data){
+  if (data.substring(0, 1) == "."){
+    compressed = true;
+    data = data.slice(1);
+    console.log("SLiced");
+    console.log(data);
+  }
+  data = data.split(".")[0];
+  data = urlsafe_b64.decode(data);
+  console.log(data);
+  if (compressed){
+  data = pako.inflate(data, { to: 'string' });
+}
+  data = JSON.parse(data);
+  console.log(data);
+  console.log("done");
+  console.log(data.cart);
+  this.setState({cart: data.cart})
+}
+
 
   this.socket.on("update_prod",(data) => {
     this.setState({products: data})

@@ -29,6 +29,7 @@ class Product(db.Model):
             'quantity': self.quantity
         }
 
+
 def list_retrieve():
     objs = [x.serialize for x in Product.query.all()]
     json = jsonify(objs)
@@ -51,27 +52,33 @@ db.session.commit()
 # def show_all():
 #     return render_template('show_all.html', products=Product.query.all())
 
-@app.route('/shop/', methods = ['GET'])
+@app.route('/shop/', methods=['GET'])
 def load():
     return list_retrieve()
+
 
 @app.after_request
 def shopping_cart(response):
     origin = request.headers.get('Origin')
 
-    example_cart = [{"id":1,"name":"dildo","price":98.1,"quantity":2},{"id":2,"name":"butt plug","price":128.6,"quantity":5}]
+    example_cart = [{"id": 1, "name": "dildo", "price": 98.1, "quantity": 2},
+                    {"id": 2, "name": "butt plug", "price": 128.6, "quantity": 5}]
     if 'cart' not in session:
         session['cart'] = example_cart
         session.modified = True
 
     session.modified = True
 
+    response.headers.add('Access-Control-Allow-Headers', '*')
+    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+    response.headers.add('Access-Control-Allow-Credentials', 'true')
+
     if origin:
         response.headers.add('Access-Control-Allow-Origin', origin)
     return response
 
 
-@app.route('/sess/', methods = ['GET'])
+@app.route('/sess/', methods=['GET'])
 def updating_session():
     res = str(session.items())
 
@@ -92,12 +99,13 @@ def test_connect():
     print(a)
     emit("update_prod", a)
 
+
 @socketio.on('modified')
 def test_connect():
     print('someone connected to websocket')
     a = [x.serialize for x in Product.query.all()]
     print(a)
-    emit("update_prod", a)
+    # emit("update_prod", a)
 
 
 @socketio.on('added-to-cart')
