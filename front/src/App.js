@@ -40,8 +40,8 @@ class App extends Component {
             console.log(this.state.products);
             console.log('data');
             console.log(data);
-            this.socket = io(this.state.endpoint);
         });
+        this.socket = io(this.state.endpoint);
         
         console.log("coooooookie");
         let data = Cookies.get('cart');
