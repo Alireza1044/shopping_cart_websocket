@@ -1,25 +1,33 @@
-from flask import Flask, render_template, request, flash, redirect, url_for, jsonify, session, make_response
+from flask import Flask, render_template, request, flash, redirect, url_for, jsonify, make_response, session
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from flask_socketio import SocketIO, emit, send
-from sqlalchemy.orm.attributes import flag_modified
-# from flask.ext.session import Session
+
 from flask_session import Session
 from cookie import *
 
-app = Flask(__name__, template_folder="/template")
+# import redis
+# from flask_kvsession import KVSessionExtension
+# from simplekv.memory.redisstore import RedisStore
+#
+# store = RedisStore(redis.StrictRedis())
 
-app.config['SESSION_TYPE'] = 'filesystem'
+app = Flask(__name__)
+
+app.config['SESSION_TYPE'] = 'redis'
+app.config['SESSION_PERMANENT'] = 'True'
+
 app.config['SESSION_COOKIE_HTTPONLY'] = False
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///students.sqlite3'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///products.sqlite3'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = 'true'
 app.config['SECRET_KEY'] = 'guessmeifyoucan'
 app.config['JSONIFY_PRETTYPRINT_REGULAR'] = False
 
 Session(app)
-socketio = SocketIO(app, cors_allowed_origins="*", manage_session=False)
-db = SQLAlchemy(app)
+# KVSessionExtension(store, app)
 
+socketio = SocketIO(app, cors_allowed_origins="*", manage_session=True)
+db = SQLAlchemy(app)
 
 class Product(db.Model):
     id = db.Column('product_id', db.Integer, primary_key=True)
@@ -37,11 +45,39 @@ class Product(db.Model):
             'quantity': self.quantity
         }
 
+class CartEntity(db.Model):
 
-def list_retrieve():
-    objs = [x.serialize for x in Product.query.all()]
-    json = jsonify(objs)
-    return json
+    ref = db.Column('entity_ref', db.Integer, primary_key=True)
+    id = db.Column(db.Integer)
+    owner = db.Column(db.String(50))
+
+    @property
+    def serialize(self):
+        """Return object data in easily serializable format"""
+        return {
+            'ref': self.ref,
+            'id': self.id,
+            'owner': self.owner
+        }
+
+db.create_all()
+
+p1 = Product(name='dildo', price=98.1, quantity=40)
+p2 = Product(name='butt plug', price=128.6, quantity=25)
+p3 = Product(name='clip', price=13.8, quantity=164)
+
+if len(Product.query.all()) == 0:
+    db.session.add(p1)
+    db.session.add(p2)
+    db.session.add(p3)
+    db.session.commit()
+
+
+
+# def list_retrieve():
+#     objs = [x.serialize for x in Product.query.all()]
+#     json = jsonify(objs)
+#     return json
 
 def deserialize(json):
     name = str(json['name'])
@@ -50,16 +86,7 @@ def deserialize(json):
 
     return name, price, quantity
 
-db.create_all()
 
-p1 = Product(name='dildo', price=98.1, quantity=40)
-p2 = Product(name='butt plug', price=128.6, quantity=25)
-p3 = Product(name='clip', price=13.8, quantity=164)
-
-db.session.add(p1)
-db.session.add(p2)
-db.session.add(p3)
-db.session.commit()
 
 
 # @app.route('/')
@@ -68,15 +95,6 @@ db.session.commit()
 
 @app.route('/shop/', methods=['GET'])
 def load():
-
-    if 'cart' not in session:
-        session['cart'] = {'foo' : 'areee'}
-        session.modified = True
-
-    print('***************************\n\n')
-    print(session)
-    print('\n\n***************************\n\n')
-
 
     objs = [x.serialize for x in Product.query.all()]
     json = jsonify(objs)
@@ -87,17 +105,6 @@ def load():
 def shopping_cart(response):
     origin = request.headers.get('Origin')
 
-    cookie_data = encodeFlaskCookie(app.secret_key, dict(session))
-    print('***************************\n\n')
-    print(cookie_data)
-    print('\n\n***************************\n\n')
-    coo_dec = decodeFlaskCookie(app.secret_key, cookie_data)
-    print(coo_dec)
-    print('\n\n***************************\n\n')
-    response.set_cookie('cart', cookie_data)
-
-
-
     response.headers.add('Access-Control-Allow-Headers', '*')
     response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
     response.headers.add('Access-Control-Allow-Credentials', 'true')
@@ -105,15 +112,6 @@ def shopping_cart(response):
     if origin:
         response.headers.add('Access-Control-Allow-Origin', origin)
     return response
-
-
-# @socketio.on('connect')
-# def test_connect():
-#     print('someone connected to websocket')
-#     a = [x.serialize for x in Product.query.all()]
-#     # print(a)
-#     emit("update_prod", a)
-
 
 @socketio.on('modified-product')
 def modify(data):
@@ -155,7 +153,6 @@ def remove(data):
 
     Product.query.filter_by(id=id).delete()
 
-    # db.session.delete(product)
     db.session.commit()
 
     a = [x.serialize for x in Product.query.all()]
@@ -163,47 +160,112 @@ def remove(data):
     emit("update_prod", a, broadcast=True)
 
 
+def retrieve_cart(cookie):
+    entities = CartEntity.query.filter_by(owner=cookie).all()
+    ls = []
+
+    for e in entities:
+        des = Product.query.filter_by(id=e.id).first().serialize
+        ls.append(des)
+
+    return ls
+
+
 @socketio.on('added-to-cart')
 def add_to_cart(data):
 
-    id = data['id']
+    print('*************************** add cart \n\n')
+    print(data)
+    print('\n\n***************************\n\n')
 
-    product = Product.query.filter_by(id=id).first()
+    id = data['id']
+    owner = data['owner']
+
+    cart_entity = CartEntity(id=id, owner=owner)
+    db.session.add(cart_entity)
+    db.session.commit()
+
+    # cart_items = CartEntity.query.filter_by(owner=owner).all()
+
+    # a = [x.serialize for x in CartEntity.query.filter_by(owner=owner).all()]
+
+
 
     # if 'cart' not in session:
     #     session['cart'] = {}
     #     session.modified = True
+    #
+    #
+    #
+    # session['cart'][id] = product.serialize
+    # session.modified = True
+    # app.save_session(session, make_response('dummb'))
+    #
+    # print('***************************\n\n')
+    # print(session)
+    # print('\n\n***************************\n\n')
 
-
-
-    session['cart'][id] = product.serialize
-
-    print('***************************\n\n')
-    print(session)
+    a = retrieve_cart(owner)
+    print('*************************** a \n\n')
+    print(a)
     print('\n\n***************************\n\n')
-    # session['cart'] = 'kiiiiir'
-
-
-    session.modified = True
-
-    a = [session['cart']]
     emit('update_cart', a)
-
 
 @socketio.on('removed-from-cart')
 def removed_from_cart(data):
-    # print('***************************\n\n')
+    print('*************************** rm cart \n\n')
     print(data)
-    # print('\n\n***************************\n\n')
+    print('\n\n***************************\n\n')
     id = data['id']
+    owner = data['owner']
 
-    session['cart'].pop(id, None)
-    session.modified = True
+    CartEntity.query.filter_by(owner=owner, id=id).all().delete()
+    db.session.commit()
 
-    a = [session['cart']]
-    # print("A=   ", a)
+
+    a = retrieve_cart(owner)
+    print('*************************** a \n\n')
+    print(a)
+    print('\n\n***************************\n\n')
     emit('update_cart', a)
 
+@socketio.on('get-cart')
+def get_cart(data):
+    print('*************************** get_cart\n\n')
+    print(data)
+    print('\n\n***************************\n\n')
+    owner = data['owner']
+
+    a = retrieve_cart(owner)
+    print('*************************** a \n\n')
+    print(a)
+    print('\n\n***************************\n\n')
+    emit('update_cart', a)
+
+@socketio.on('checkout')
+def get_cart(data):
+    print('*************************** checkout\n\n')
+    print(data)
+    print('\n\n***************************\n\n')
+    owner = data['owner']
+
+    entities = CartEntity.query.filter_by(owner=owner).all()
+    ls = []
+
+    for e in entities:
+        obj = Product.query.filter_by(id=e.id).first()
+
+        if obj.quantity > 0:
+            obj.quantity -= 1
+            db.session.delete(e)
+
+        db.session.commit()
+
+
+    a = retrieve_cart(owner)
+    emit('update_cart', a)
+    b = [x.serialize for x in Product.query.all()]
+    emit("update_prod", b, broadcast=True)
 
 if __name__ == '__main__':
-    socketio.run(app, port=5000)
+    socketio.run(app)
