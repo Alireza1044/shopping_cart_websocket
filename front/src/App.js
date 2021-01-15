@@ -43,8 +43,9 @@ class App extends Component {
         });
         this.socket = io(this.state.endpoint);
         
+        
         console.log("coooooookie");
-        let data = Cookies.get('cart');
+        let data = Cookies.get('session');
         console.log(data);
         var compressed = false;
         if (data){
@@ -67,6 +68,11 @@ class App extends Component {
             this.setState({cart: data.cart})
         }
         
+        this.socket.emit("get-cart", {owner: data}, function(idp){
+            console.log("sadsadfdfskklndkasflslkdd");
+            console.log(data);
+        });
+        
         
         if(this.socket){
         this.socket.on("update_prod",(data) => {
@@ -83,21 +89,29 @@ class App extends Component {
     
     handleClick(e,idprod) {
         e.preventDefault();
-        this.socket.emit("added-to-cart", {id : idprod}, function(idp){
+        let data = Cookies.get('session');
+        this.socket.emit("added-to-cart", {owner: data, id : idprod}, function(idp){
+            console.log("sadsad add aadd ad add");
             console.log(idprod);
+            console.log(data);
         });
     }
     
     handleClickRemove(e,idprod) {
         e.preventDefault();
-        this.socket.emit("removed-from-cart", {id : idprod}, function(idps){
+        let data = Cookies.get('session');
+        this.socket.emit("removed-from-cart", {owner: data, id : idprod}, function(idps){
             console.log(idprod);
         });
     }
     
     handleClickCheckout(e) {
         e.preventDefault();
-        this.socket.emit("checkout");
+        let data = Cookies.get('session');
+        this.socket.emit("checkout", {owner: data}, function(idp){
+            console.log("checkout");
+            console.log(data);
+        });
     }
     
     renderTableDataProducts(where) {
