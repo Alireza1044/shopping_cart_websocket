@@ -67,7 +67,7 @@ class App extends Component {
 //            console.log(data.cart);
 //            this.setState({cart: data.cart})
 //        }
-        
+        if(data){
         this.socket.emit("get-cart", {owner: data}, function(idp){
             console.log("sadsadfdfskklndkasflslkdd");
             console.log(data);
@@ -86,32 +86,39 @@ class App extends Component {
         });
         }
     }
+    }
     
     handleClick(e,idprod) {
         e.preventDefault();
         let data = Cookies.get('session');
+        if(data){
         this.socket.emit("added-to-cart", {owner: data, id : idprod}, function(idp){
             console.log("sadsad add aadd ad add");
             console.log(idprod);
             console.log(data);
         });
+        }
     }
     
     handleClickRemove(e,idprod) {
         e.preventDefault();
         let data = Cookies.get('session');
+        if(data){
         this.socket.emit("removed-from-cart", {owner: data, id : idprod}, function(idps){
             console.log(idprod);
         });
+        }
     }
     
     handleClickCheckout(e) {
         e.preventDefault();
         let data = Cookies.get('session');
+        if(data){
         this.socket.emit("checkout", {owner: data}, function(idp){
             console.log("checkout");
             console.log(data);
         });
+        }
     }
     
     renderTableDataProducts(where) {
@@ -142,7 +149,6 @@ class App extends Component {
                             <td>{id}</td>
                             <td>{name}</td>
                             <td>{price}</td>
-                            <td>{quantity}</td>
                             <td><button key={id} width='50px' height='50px' onClick={(e) => this.handleClickRemove(e,id)}>Remove</button></td>
                             </tr>
                             )
@@ -154,6 +160,7 @@ class App extends Component {
     renderTableHeaderCart(where) {
         if(where[0]){
             let header = Object.keys(where[0]);
+            header.pop();
             return header.map((key, index) => {
                 return <th key={index}>{key.toUpperCase()}</th>
             })
