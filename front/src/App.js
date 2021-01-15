@@ -46,27 +46,27 @@ class App extends Component {
         
         console.log("coooooookie");
         let data = Cookies.get('session');
-        console.log(data);
-        var compressed = false;
-        if (data){
-            if (data.substring(0, 1) == "."){
-                compressed = true;
-                data = data.slice(1);
-                console.log("SLiced");
-                console.log(data);
-            }
-            data = data.split(".")[0];
-            data = urlsafe_b64.decode(data);
-            console.log(data);
-            if (compressed){
-                data = pako.inflate(data, { to: 'string' });
-            }
-            data = JSON.parse(data);
-            console.log(data);
-            console.log("done");
-            console.log(data.cart);
-            this.setState({cart: data.cart})
-        }
+//        console.log(data);
+//        var compressed = false;
+//        if (data){
+//            if (data.substring(0, 1) == "."){
+//                compressed = true;
+//                data = data.slice(1);
+//                console.log("SLiced");
+//                console.log(data);
+//            }
+//            data = data.split(".")[0];
+//            data = urlsafe_b64.decode(data);
+//            console.log(data);
+//            if (compressed){
+//                data = pako.inflate(data, { to: 'string' });
+//            }
+//            data = JSON.parse(data);
+//            console.log(data);
+//            console.log("done");
+//            console.log(data.cart);
+//            this.setState({cart: data.cart})
+//        }
         
         this.socket.emit("get-cart", {owner: data}, function(idp){
             console.log("sadsadfdfskklndkasflslkdd");
