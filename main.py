@@ -6,12 +6,6 @@ from flask_socketio import SocketIO, emit, send
 from flask_session import Session
 from cookie import *
 
-# import redis
-# from flask_kvsession import KVSessionExtension
-# from simplekv.memory.redisstore import RedisStore
-#
-# store = RedisStore(redis.StrictRedis())
-
 app = Flask(__name__)
 
 app.config['SESSION_TYPE'] = 'redis'
@@ -24,7 +18,6 @@ app.config['SECRET_KEY'] = 'guessmeifyoucan'
 app.config['JSONIFY_PRETTYPRINT_REGULAR'] = False
 
 Session(app)
-# KVSessionExtension(store, app)
 
 socketio = SocketIO(app, cors_allowed_origins="*", manage_session=True)
 db = SQLAlchemy(app)
@@ -46,56 +39,46 @@ class Product(db.Model):
         }
 
 class CartEntity(db.Model):
-
     ref = db.Column('entity_ref', db.Integer, primary_key=True)
     id = db.Column(db.Integer)
     owner = db.Column(db.String(50))
 
-    @property
-    def serialize(self):
-        """Return object data in easily serializable format"""
-        return {
-            'ref': self.ref,
-            'id': self.id,
-            'owner': self.owner
-        }
-
 db.create_all()
 
-p1 = Product(name='dildo', price=98.1, quantity=40)
-p2 = Product(name='butt plug', price=128.6, quantity=25)
-p3 = Product(name='clip', price=13.8, quantity=164)
+p1 = Product(name='Video Game', price=59.9, quantity=40)
+p2 = Product(name='Mask', price=2.6, quantity=130)
+p3 = Product(name='Shampoo', price=13.8, quantity=76)
+p4 = Product(name='Cellphone', price=999.99, quantity=24)
+p5 = Product(name='Table', price=230.6, quantity=53)
+p6 = Product(name='Box', price=7.13, quantity=103)
 
 if len(Product.query.all()) == 0:
     db.session.add(p1)
     db.session.add(p2)
     db.session.add(p3)
+    db.session.add(p4)
+    db.session.add(p5)
+    db.session.add(p6)
     db.session.commit()
 
+def retrieve_cart(cookie):
+    entities = CartEntity.query.filter_by(owner=cookie).all()
+    ls = []
 
+    for e in entities:
+        des = Product.query.filter_by(id=e.id).first().serialize
+        ls.append(des)
 
-# def list_retrieve():
-#     objs = [x.serialize for x in Product.query.all()]
-#     json = jsonify(objs)
-#     return json
+    return ls
 
 def deserialize(json):
     name = str(json['name'])
     price = float(json['price'])
     quantity = int(json['quantity'])
-
     return name, price, quantity
-
-
-
-
-# @app.route('/')
-# def show_all():
-#     return render_template('show_all.html', products=Product.query.all())
 
 @app.route('/shop/', methods=['GET'])
 def load():
-
     objs = [x.serialize for x in Product.query.all()]
     json = jsonify(objs)
     return json
@@ -111,11 +94,11 @@ def shopping_cart(response):
 
     if origin:
         response.headers.add('Access-Control-Allow-Origin', origin)
+
     return response
 
 @socketio.on('modified-product')
 def modify(data):
-    print('data modified')
     id = data['id']
 
     product = Product.query.filter_by(id=id).first()
@@ -127,10 +110,8 @@ def modify(data):
 
     db.session.commit()
 
-    a = [x.serialize for x in Product.query.all()]
-    print(a)
-    emit("update_prod", a, broadcast=True)
-
+    prods = [x.serialize for x in Product.query.all()]
+    emit("update_prod", prods, broadcast=True)
 
 @socketio.on('added-product')
 def add(data):
@@ -142,9 +123,8 @@ def add(data):
     db.session.add(n_product)
     db.session.commit()
 
-    a = [x.serialize for x in Product.query.all()]
-    print(a)
-    emit("update_prod", a, broadcast=True)
+    prods = [x.serialize for x in Product.query.all()]
+    emit("update_prod", prods, broadcast=True)
 
 @socketio.on('removed-product')
 def remove(data):
@@ -155,28 +135,15 @@ def remove(data):
 
     db.session.commit()
 
-    a = [x.serialize for x in Product.query.all()]
-    print(a)
-    emit("update_prod", a, broadcast=True)
+    prods = [x.serialize for x in Product.query.all()]
+    emit("update_prod", prods, broadcast=True)
 
 
-def retrieve_cart(cookie):
-    entities = CartEntity.query.filter_by(owner=cookie).all()
-    ls = []
 
-    for e in entities:
-        des = Product.query.filter_by(id=e.id).first().serialize
-        ls.append(des)
-
-    return ls
 
 
 @socketio.on('added-to-cart')
 def add_to_cart(data):
-
-    print('*************************** add cart \n\n')
-    print(data)
-    print('\n\n***************************\n\n')
 
     id = data['id']
     owner = data['owner']
@@ -185,37 +152,11 @@ def add_to_cart(data):
     db.session.add(cart_entity)
     db.session.commit()
 
-    # cart_items = CartEntity.query.filter_by(owner=owner).all()
-
-    # a = [x.serialize for x in CartEntity.query.filter_by(owner=owner).all()]
-
-
-
-    # if 'cart' not in session:
-    #     session['cart'] = {}
-    #     session.modified = True
-    #
-    #
-    #
-    # session['cart'][id] = product.serialize
-    # session.modified = True
-    # app.save_session(session, make_response('dummb'))
-    #
-    # print('***************************\n\n')
-    # print(session)
-    # print('\n\n***************************\n\n')
-
-    a = retrieve_cart(owner)
-    print('*************************** a \n\n')
-    print(a)
-    print('\n\n***************************\n\n')
-    emit('update_cart', a)
+    cart = retrieve_cart(owner)
+    emit('update_cart', cart)
 
 @socketio.on('removed-from-cart')
 def removed_from_cart(data):
-    print('*************************** rm cart \n\n')
-    print(data)
-    print('\n\n***************************\n\n')
     id = data['id']
     owner = data['owner']
 
@@ -224,35 +165,20 @@ def removed_from_cart(data):
         db.session.delete(e)
     db.session.commit()
 
-
-    a = retrieve_cart(owner)
-    print('*************************** a \n\n')
-    print(a)
-    print('\n\n***************************\n\n')
-    emit('update_cart', a)
+    cart = retrieve_cart(owner)
+    emit('update_cart', cart)
 
 @socketio.on('get-cart')
 def get_cart(data):
-    print('*************************** get_cart\n\n')
-    print(data)
-    print('\n\n***************************\n\n')
     owner = data['owner']
-
-    a = retrieve_cart(owner)
-    print('*************************** a \n\n')
-    print(a)
-    print('\n\n***************************\n\n')
-    emit('update_cart', a)
+    cart = retrieve_cart(owner)
+    emit('update_cart', cart)
 
 @socketio.on('checkout')
 def get_cart(data):
-    print('*************************** checkout\n\n')
-    print(data)
-    print('\n\n***************************\n\n')
-    owner = data['owner']
 
+    owner = data['owner']
     entities = CartEntity.query.filter_by(owner=owner).all()
-    ls = []
 
     for e in entities:
         obj = Product.query.filter_by(id=e.id).first()
@@ -260,14 +186,12 @@ def get_cart(data):
         if obj.quantity > 0:
             obj.quantity -= 1
             db.session.delete(e)
-
         db.session.commit()
 
-
-    a = retrieve_cart(owner)
-    emit('update_cart', a)
-    b = [x.serialize for x in Product.query.all()]
-    emit("update_prod", b, broadcast=True)
+    cart = retrieve_cart(owner)
+    emit('update_cart', cart)
+    prods = [x.serialize for x in Product.query.all()]
+    emit("update_prod", prods, broadcast=True)
 
 if __name__ == '__main__':
     socketio.run(app)
