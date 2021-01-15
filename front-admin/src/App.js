@@ -23,6 +23,7 @@ class App extends Component {
         this.handleClick = this.handleClick.bind(this);
         this.handleClickRemove = this.handleClickRemove.bind(this);
         this.handleClickAddNewProd = this.handleClickAddNewProd.bind(this);
+        this.handleChangesss = this.handleChangesss.bind(this);
         this.socket = io(this.state.endpoint)
     }
     
@@ -78,6 +79,12 @@ class App extends Component {
         });
       }
     
+    handleChangesss(e) {
+        this.setState({
+          value: e.target.value
+        });
+    }
+    
     renderTableDataProducts(where) {
         return where.map((student, index) => {
             const { id, name, price, quantity } = student //destructuring
@@ -89,11 +96,12 @@ class App extends Component {
                     <td>{id}</td>
                     <td><input type="text" name={name_name} defaultValue={name}></input></td>
                     <td><input type="text" name={name_price} defaultValue={price}></input></td>
-                    <td><input type="text" name={name_quant} defaultValue={quantity}></input></td>
+                    
+                    <td><div name={name_quant} contentEditable="true" suppressContentEditableWarning={true}>{quantity}</div></td>
                     <td><button key={id} width='50px' height='50px' onClick={(e) => this.handleClick(e,id,
                                                                                                      document.getElementsByName(name_name)[0].value,
                                                                                                      document.getElementsByName(name_price)[0].value,
-                                                                                                     document.getElementsByName(name_quant)[0].value)}>Apply</button></td>
+                                                                                                     document.getElementsByName(name_quant)[0].innerHTML)}>Apply</button></td>
                     <td><button key={id} width='50px' height='50px' onClick={(e) => this.handleClickRemove(e,id)}>Remove</button></td>
                     </tr>
                     )

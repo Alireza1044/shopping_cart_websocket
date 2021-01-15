@@ -134,8 +134,8 @@ class App extends Component {
             if(where[0]){
                 let header = Object.keys(where[0]);
                 var f = where[0];
-                return header.map((key, index) => {
-                    const { id, name, price, quantity } = f[key]; //destructuring
+                return where.map((key, index) => {
+                    const { id, name, price, quantity } = key; //destructuring
                     var ref_tag = `${id}_remove`;
                     return (
                             <tr key={id}>
@@ -154,13 +154,9 @@ class App extends Component {
     renderTableHeaderCart(where) {
         if(where[0]){
             let header = Object.keys(where[0]);
-            var k = header[0];
-            var f = where[0];
-            if(k){
-                return Object.keys(f[k]).map((key, index) => {
-                    return <th key={index}>{key.toUpperCase()}</th>
-                })
-        }
+            return header.map((key, index) => {
+                return <th key={index}>{key.toUpperCase()}</th>
+            })
         }
     }
     
