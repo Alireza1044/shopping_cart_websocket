@@ -219,7 +219,9 @@ def removed_from_cart(data):
     id = data['id']
     owner = data['owner']
 
-    CartEntity.query.filter_by(owner=owner, id=id).all().delete()
+    entities = CartEntity.query.filter_by(owner=owner, id=id).all()
+    for e in entities:
+        db.session.delete(e)
     db.session.commit()
 
 
